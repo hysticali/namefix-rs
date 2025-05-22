@@ -19,11 +19,20 @@ struct Args {
 }
 
 fn clean_filename(filename: &str) -> String {
-    // Remove control characters from the filename
-    filename
-        .split(|c: char| c.is_control())
-        .collect::<Vec<&str>>()
-        .join("")
+    // First, handle invalid UTF-8 by replacing invalid characters
+    let mut cleaned = String::new();
+    for c in filename.chars() {
+        if c.is_control() {
+            continue; // Skip control characters
+        } else if c == '\u{FFFD}' {  // Unicode replacement character
+            cleaned.push('_'); // Replace invalid encoding character with underscore
+        } else {
+            cleaned.push(c);
+        }
+    }
+    
+    // Trim any leading/trailing whitespace
+    cleaned.trim().to_string()
 }
 
 fn process_directory(path: &Path, dry_run: bool) -> Result<(), Box<dyn Error>> {
